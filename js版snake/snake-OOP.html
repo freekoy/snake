@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>OOP写的贪吃蛇</title>
+</head>
+<style>
+.main {
+  width: 400px;
+  height: 400px;
+  border: 1px solid blue;
+  position: relative;
+}
+.main div {
+  position: absolute;
+}
+.food {
+  width: 10px;
+  height: 10px;
+  background: purple;
+}
+.snakebody {
+  width: 8px;
+  height: 8px;
+  border: 1px solid yellow;
+  background: black;
+}
+</style>
+<body onkeyup="game.keyListener(event);">
+  <div class="main"></div>
+  <button type="button" name="" onclick="game.start();">开始</button>
+  <button type="button" name="" onclick="game.stop();">停止</button>
+  <button type="button" name="" onclick="game.restart();">重开一局</button>
+  <span>得分:0</span>
+</body>
+<script src="jquery.js"></script>
+<script>
+  var snake = {
+    body:[[150,150],[160,150],[170,150]],
+    direction:'left',
+    speed:200,
+    createSnake:function() {
+      //创建蛇身  根据数组来决定屏幕显示多少蛇身
+      for (var i = 0; i < this.body.length; i++) {
+        var snakebody = document.createElement('div');
+        snakebody.className = 'snakebody';
+        game.main[0].appendChild(snakebody);
+      }
+      //找位置放蛇身
+      var snakebody = document.getElementsByClassName('snakebody');
+      for (var i = 0; i < this.body.length; i++) {
+        snakebody[i].style.left = this.body[i][0] + 'px';
+        snakebody[i].style.top = this.body[i][1] + 'px';
+
+      }
+    },
+    fail:function() {
+      //判断输赢 不论贪吃吃怎么移动,蛇头是关键
+      //出界输
+      if(this.body[0][0] < 0 || this.body[0][0] > 390 || this.body[0][1] > 390 || this.body[0][1] < 0) {
+        clearInterval(game.clock);
+        alert('END');
+        game.statu = 0;
+      }
+      //碰到自己的身体输
+      for(var i = 1;i < this.body.length;i++) {
+        if(this.body[0][0] == this.body[i][0] && this.body[0][1] == this.body[i][1]) {
+          clearInterval(game.clock);
+          alert('END');
+          game.statu = 0;
+        }
+      }
+    },
+    eat:function() {
+      //遇到食物 遇到食物前记录下最后那节身体的位置 吃掉食物 就显示出来 且食物消失
+      if((this.body[0][0] + 'px') == food.food_x && (this.body[0][1] + 'px') == food.food_y) {
+        var newbody_x = this.body[this.body.length-1][0];
+        var newbody_y = this.body[this.body.length-1][1];
+        var span = document.getElementsByTagName('span')[0];
+        game.main[0].innerHTML = '';
+        this.body.push([newbody_x,newbody_y]);
+        this.reborn();
+        game.score = game.score + 1;
+        span.innerHTML = '得分:' + game.score;
+      };
+    },
+    reborn:function() {
+      //重生 其实就是刷新下页面
+      snake.createSnake();
+      food.newFood();
+    },
+    move:function() {
+      var snakebody = document.getElementsByClassName('snakebody');
+      this.fail();
+      this.eat();
+      //判断移动方向
+      if(this.direction == 'left') {
+        for (var i = this.body.length - 1; i > -1; i--) {
+          if(i==0) {
+            //如果是头部,则转向 改变数组的值,再根据数组的值来移动
+            this.body[i][0] = this.body[i][0] - 10;
+            this.body[i][1] = this.body[i][1];
+          }else {
+            //否则 后面的跟着头来移动
+            this.body[i][0] = this.body[i-1][0];
+            this.body[i][1] = this.body[i-1][1];
+          }
+          snakebody[i].style.left = this.body[i][0] + 'px';
+          snakebody[i].style.top = this.body[i][1] + 'px';
+        }
+      }else if(this.direction == 'right') {
+        for (var i = this.body.length - 1; i > -1; i--) {
+          if(i==0) {
+            this.body[i][0] = this.body[i][0] + 10;
+            this.body[i][1] = this.body[i][1];
+          }else {
+            this.body[i][0] = this.body[i-1][0];
+            this.body[i][1] = this.body[i-1][1];
+          }
+          snakebody[i].style.left = this.body[i][0] + 'px';
+          snakebody[i].style.top = this.body[i][1] + 'px';
+        }
+      }else if(this.direction == 'up') {
+        for (var i = this.body.length- 1; i > -1; i--) {
+          if(i==0) {
+            this.body[i][0] = this.body[i][0];
+            this.body[i][1] = this.body[i][1] - 10;
+          }else {
+            this.body[i][0] = this.body[i-1][0];
+            this.body[i][1] = this.body[i-1][1];
+          }
+          snakebody[i].style.left = this.body[i][0] + 'px';
+          snakebody[i].style.top = this.body[i][1] + 'px';
+        }
+      }else if(this.direction == 'down') {
+        for (var i = this.body.length - 1; i > -1; i--) {
+          if(i==0) {
+            this.body[i][0] = this.body[i][0];
+            this.body[i][1] = this.body[i][1] + 10;
+          }else {
+            this.body[i][0] = this.body[i-1][0];
+            this.body[i][1] = this.body[i-1][1];
+          }
+          snakebody[i].style.left = this.body[i][0] + 'px';
+          snakebody[i].style.top = this.body[i][1] + 'px';
+        }
+      }
+    }
+  };
+
+  var food = {
+    newFood:function() {
+      var food = document.createElement('div');
+      food.className = 'food';
+      food.style.left = (parseInt(39*Math.random()) * 10) + 'px';
+      food.style.top = (parseInt(39*Math.random()) * 10) + 'px';
+      this.food_x = food.style.left;
+      this.food_y = food.style.top;
+      game.main[0].appendChild(food);
+    }
+  };
+
+  var game = {
+    main:document.getElementsByClassName('main'),
+    score:0,
+    statu:1,
+    clock:'',
+    start:function() {
+      if(this.statu == 1) {
+        this.clock = setInterval('snake.move()',400);
+      }
+    },
+    stop:function() {
+      clearInterval(this.clock);
+    },
+    restart:function() {
+      this.statu = 1;
+      snake.body = [[150,150],[160,150],[170,150]];
+      snake.direction = 'left';
+      snake.speed = 200;
+      clearInterval(this.clock);
+      this.clock = setInterval('snake.move()',snake.speed);
+      this.main[0].innerHTML = '';
+      snake.createSnake();
+      food.newFood();
+    },
+    keyListener:function(event) {
+      //监听按键 改变方向
+      var n = event.keyCode;
+      switch (n) {
+        case 40:
+        //不能反向移动
+        if(snake.direction != 'up') {
+            //不能后退
+            if(snake.body[0][0] != snake.body[1][0] && snake.body[0][1] - 10 != snake.body[1][1]) {
+              snake.direction = 'down';
+            }
+          }
+          break;
+        case 39:
+        if(snake.direction != 'left') {
+          if(snake.body[0][0] - 10 != snake.body[1][0] && snake.body[0][1] != snake.body[1][1]) {
+            snake.direction = 'right';
+          }
+        }
+          break;
+        case 38:
+        if(snake.direction != 'down') {
+          if(snake.body[0][0] != snake.body[1][0] && snake.body[0][1] + 10 != snake.body[1][1]) {
+            snake.direction = 'up';
+          }
+        }
+          break;
+        case 37:
+        if(snake.direction != 'right') {
+          if(snake.body[0][0] + 10 != snake.body[1][0] && snake.body[0][1] != snake.body[1][1]) {
+            snake.direction = 'left';
+          }
+        }
+          break;
+      }
+    }
+  };
+  //初始化
+  snake.createSnake();
+  food.newFood();
+</script>
+</html>
